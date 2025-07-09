@@ -48,8 +48,8 @@ export default class TabManager {
 
     // Handle title updates
     view.webContents.on("page-title-updated", (_: any, title: string) => {
-      // Remove "– Paper" suffix from tab titles
-      tab.title = title.replace(/\s*–\s*Paper$/, "").trim() || title;
+      // Remove anything that starts with a dash from tab titles
+      tab.title = title.replace(/\s*–.*$/, "").trim() || title;
       this.sendTabsUpdate();
     });
 
