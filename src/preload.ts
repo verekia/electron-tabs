@@ -10,4 +10,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onTabsUpdated: (callback: (tabsData: any[]) => void) => {
     ipcRenderer.on("tabs-updated", (_event, tabsData) => callback(tabsData));
   },
+  openTabDevTools: () => ipcRenderer.invoke("open-tab-devtools"),
+  openMainDevTools: () => ipcRenderer.invoke("open-main-devtools"),
 });

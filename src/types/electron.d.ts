@@ -4,6 +4,8 @@ export interface IElectronAPI {
   setActiveTab: (tabId: number) => Promise<void>;
   getTabs: () => Promise<Tab[]>;
   onTabsUpdated: (callback: (tabsData: Tab[]) => void) => void;
+  openTabDevTools: () => Promise<void>;
+  openMainDevTools: () => Promise<void>;
 }
 
 interface Tab {
