@@ -1,10 +1,13 @@
-import { app, BrowserWindow, ipcMain, BrowserView } from "electron";
+import { app, BrowserWindow, ipcMain, WebContentsView } from "electron";
 import type { WebContents } from "electron";
 import * as path from "path";
 
+// Default URL for new tabs
+const DEFAULT_URL = "http://localhost:5173";
+
 interface Tab {
   id: number;
-  view: BrowserView;
+  view: WebContentsView;
   title: string;
   url: string;
   isActive: boolean;
@@ -20,19 +23,22 @@ class TabManager {
     this.mainWindow = window;
   }
 
-  createTab(url: string, makeActive = true): number {
+  createTab(url: string = DEFAULT_URL, makeActive = true): number {
     if (!this.mainWindow) return -1;
 
     const tabId = this.nextTabId++;
 
-    // Create a BrowserView for the new tab
-    const view = new BrowserView({
+    // Create a WebContentsView for the new tab
+    const view = new WebContentsView({
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
         devTools: true,
       },
     });
+
+    // Set transparent background (WebContentsView defaults to white)
+    view.setBackgroundColor("#00000000");
 
     const tab: Tab = {
       id: tabId,
@@ -105,16 +111,16 @@ class TabManager {
 
     // Remove the view from main window if it's active
     if (this.activeTabId === tabId && this.mainWindow) {
-      this.mainWindow.setBrowserView(null);
+      this.mainWindow.contentView.removeChildView(tab.view);
     }
 
-    // Destroy the view
-    (tab.view as any).destroy();
+    // Close the webContents (important for memory management)
+    tab.view.webContents.close();
 
     this.tabs.delete(tabId);
 
     if (this.activeTabId === tabId) {
-      // Switch to another tab or close window if no tabs left
+      // Switch to another tab or create a new default tab if no tabs left
       const remainingTabs = Array.from(this.tabs.keys());
       if (remainingTabs.length > 0) {
         const firstTab = remainingTabs[0];
@@ -122,7 +128,8 @@ class TabManager {
           this.setActiveTab(firstTab);
         }
       } else {
-        this.mainWindow?.close();
+        // Always keep at least one tab open - create a new default tab
+        this.createTab(DEFAULT_URL, true);
         return;
       }
     }
@@ -134,6 +141,14 @@ class TabManager {
     const tab = this.tabs.get(tabId);
     if (!tab || !this.mainWindow) return;
 
+    // Remove current active tab view if any
+    const currentActiveTab = Array.from(this.tabs.values()).find(
+      (t) => t.isActive
+    );
+    if (currentActiveTab) {
+      this.mainWindow.contentView.removeChildView(currentActiveTab.view);
+    }
+
     // Deactivate all tabs
     this.tabs.forEach((t) => (t.isActive = false));
 
@@ -141,8 +156,8 @@ class TabManager {
     tab.isActive = true;
     this.activeTabId = tabId;
 
-    // Set the active tab's view in the main window
-    this.mainWindow.setBrowserView(tab.view);
+    // Add the active tab's view to the main window
+    this.mainWindow.contentView.addChildView(tab.view);
 
     // Position the view below the tab bar
     const bounds = this.mainWindow.getBounds();
@@ -171,6 +186,22 @@ class TabManager {
 
   getTabs() {
     return Array.from(this.tabs.values());
+  }
+
+  // Helper method to handle window resize for active tab
+  handleWindowResize() {
+    if (!this.mainWindow || !this.activeTabId) return;
+
+    const activeTab = this.tabs.get(this.activeTabId);
+    if (!activeTab) return;
+
+    const bounds = this.mainWindow.getBounds();
+    activeTab.view.setBounds({
+      x: 0,
+      y: 40,
+      width: bounds.width,
+      height: bounds.height - 40,
+    });
   }
 }
 
@@ -222,7 +253,7 @@ const createWindow = () => {
 
   // Create the first tab
   win.webContents.once("did-finish-load", () => {
-    tabManager.createTab("http://localhost:5173");
+    tabManager.createTab();
   });
 
   // Enable DevTools shortcuts
@@ -234,9 +265,11 @@ const createWindow = () => {
     }
     // Cmd+Option+J for active tab DevTools
     if (input.meta && input.alt && input.key === "j") {
-      const view = win.getBrowserView();
-      if (view) {
-        view.webContents.toggleDevTools();
+      const activeTab = Array.from(tabManager.getTabs()).find(
+        (tab) => tab.isActive
+      );
+      if (activeTab) {
+        activeTab.view.webContents.toggleDevTools();
         event.preventDefault();
       }
     }
@@ -244,21 +277,12 @@ const createWindow = () => {
 
   // Handle window resize to update active tab bounds
   win.on("resize", () => {
-    const view = win.getBrowserView();
-    if (view) {
-      const bounds = win.getBounds();
-      view.setBounds({
-        x: 0,
-        y: 40,
-        width: bounds.width,
-        height: bounds.height - 40,
-      });
-    }
+    tabManager.handleWindowResize();
   });
 };
 
 // IPC handlers for tab management
-ipcMain.handle("create-tab", (_, url: string) => {
+ipcMain.handle("create-tab", (_, url?: string) => {
   return tabManager.createTab(url);
 });
 
@@ -276,12 +300,11 @@ ipcMain.handle("get-tabs", () => {
 
 // DevTools IPC handlers
 ipcMain.handle("open-tab-devtools", () => {
-  const mainWindow = BrowserWindow.getFocusedWindow();
-  if (mainWindow) {
-    const view = mainWindow.getBrowserView();
-    if (view) {
-      view.webContents.openDevTools();
-    }
+  const activeTab = Array.from(tabManager.getTabs()).find(
+    (tab) => tab.isActive
+  );
+  if (activeTab) {
+    activeTab.view.webContents.openDevTools();
   }
 });
 

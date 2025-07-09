@@ -52,6 +52,8 @@
         height: 24px;
         -webkit-app-region: no-drag;
         margin-bottom: 4px;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       .tab.active {
@@ -184,15 +186,23 @@
           }
         });
 
+        // Middle mouse button to close tab
+        tabElement.addEventListener("mousedown", (e) => {
+          if (e.button === 1) {
+            // Middle mouse button
+            e.preventDefault();
+            e.stopPropagation();
+            window.electronAPI.closeTab(tab.id);
+          }
+        });
+
         return tabElement;
       };
 
       // New tab button handler
       newTabBtn.addEventListener("click", () => {
-        const url = prompt("Enter URL:", "https://www.google.com");
-        if (url) {
-          window.electronAPI.createTab(url);
-        }
+        // Create a new tab with the default URL (localhost:5173)
+        window.electronAPI.createTab();
       });
 
       // Initialize tabs on load
