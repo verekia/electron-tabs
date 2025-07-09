@@ -44,7 +44,6 @@
         border: none;
         border-radius: 6px;
         margin-right: 0;
-        cursor: pointer;
         max-width: 200px;
         min-width: 140px;
         position: relative;
@@ -57,7 +56,7 @@
       }
 
       .tab.active {
-        background: #404040;
+        background: #555555;
         z-index: 1;
       }
 
@@ -66,7 +65,7 @@
       }
 
       .tab.active:hover {
-        background: #454545;
+        background: #606060;
       }
 
       .tab-title {
@@ -88,12 +87,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 11px;
+        font-size: 14px;
         color: #999999;
         cursor: pointer;
         transition: all 0.2s;
         opacity: 0.7;
-        line-height: 1;
+        line-height: 0;
+        vertical-align: middle;
       }
 
       .tab-close:hover {
