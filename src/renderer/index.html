@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tab Manager</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: #f5f5f5;
+        height: 40px;
+        overflow: hidden;
+      }
+
+      .tab-bar {
+        display: flex;
+        background: #ffffff;
+        border-bottom: 1px solid #e0e0e0;
+        height: 40px;
+        align-items: center;
+        padding: 0 8px;
+      }
+
+      .tab {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: #f0f0f0;
+        border: 1px solid #d0d0d0;
+        border-radius: 6px 6px 0 0;
+        margin-right: 4px;
+        cursor: pointer;
+        max-width: 200px;
+        min-width: 120px;
+        position: relative;
+        transition: background-color 0.2s;
+      }
+
+      .tab.active {
+        background: #ffffff;
+        border-bottom-color: #ffffff;
+        z-index: 1;
+      }
+
+      .tab:hover {
+        background: #e8e8e8;
+      }
+
+      .tab.active:hover {
+        background: #ffffff;
+      }
+
+      .tab-title {
+        flex: 1;
+        font-size: 12px;
+        color: #333;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tab-close {
+        width: 16px;
+        height: 16px;
+        margin-left: 8px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: #666;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .tab-close:hover {
+        background: #e0e0e0;
+        color: #333;
+      }
+
+      .new-tab-btn {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: #f0f0f0;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 4px;
+        transition: background-color 0.2s;
+      }
+
+      .new-tab-btn:hover {
+        background: #e0e0e0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="tab-bar" id="tabBar">
+      <button class="new-tab-btn" id="newTabBtn" title="New Tab">+</button>
+    </div>
+
+    <script>
+      const tabBar = document.getElementById("tabBar");
+      const newTabBtn = document.getElementById("newTabBtn");
+
+      let tabs = [];
+
+      // Listen for tab updates from main process
+      window.electronAPI.onTabsUpdated((tabsData) => {
+        tabs = tabsData;
+        renderTabs();
+      });
+
+      const renderTabs = () => {
+        // Clear existing tabs (except new tab button)
+        const existingTabs = tabBar.querySelectorAll(".tab");
+        existingTabs.forEach((tab) => tab.remove());
+
+        // Render tabs
+        tabs.forEach((tab) => {
+          const tabElement = createTabElement(tab);
+          tabBar.insertBefore(tabElement, newTabBtn);
+        });
+      };
+
+      const createTabElement = (tab) => {
+        const tabElement = document.createElement("div");
+        tabElement.className = `tab ${tab.isActive ? "active" : ""}`;
+        tabElement.dataset.tabId = tab.id;
+
+        const title = document.createElement("span");
+        title.className = "tab-title";
+        title.textContent = tab.title || "New Tab";
+        title.title = tab.title || tab.url;
+
+        const closeBtn = document.createElement("span");
+        closeBtn.className = "tab-close";
+        closeBtn.innerHTML = "×";
+        closeBtn.title = "Close tab";
+
+        tabElement.appendChild(title);
+        tabElement.appendChild(closeBtn);
+
+        // Tab click handler
+        tabElement.addEventListener("click", (e) => {
+          if (e.target === closeBtn) {
+            e.stopPropagation();
+            window.electronAPI.closeTab(tab.id);
+          } else {
+            window.electronAPI.setActiveTab(tab.id);
+          }
+        });
+
+        return tabElement;
+      };
+
+      // New tab button handler
+      newTabBtn.addEventListener("click", () => {
+        const url = prompt("Enter URL:", "https://www.google.com");
+        if (url) {
+          window.electronAPI.createTab(url);
+        }
+      });
+
+      // Initialize tabs on load
+      window.addEventListener("DOMContentLoaded", () => {
+        window.electronAPI.getTabs().then((tabsData) => {
+          tabs = tabsData;
+          renderTabs();
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "electron-tabs",
+  "main": "dist/index.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/electron": "^1.6.10",
+    "electron": "^33.0.0",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
