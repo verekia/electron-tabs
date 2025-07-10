@@ -7,7 +7,7 @@
     <style>
       body {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
           sans-serif;
         background: #1a1a1a;
         height: 40px;
@@ -132,84 +132,84 @@
     </div>
 
     <script>
-      const tabBar = document.getElementById("tabBar");
-      const newTabBtn = document.getElementById("newTabBtn");
-      const dragArea = document.querySelector(".drag-area");
+      const tabBar = document.getElementById('tabBar')
+      const newTabBtn = document.getElementById('newTabBtn')
+      const dragArea = document.querySelector('.drag-area')
 
-      let tabs = [];
+      let tabs = []
 
       // Listen for tab updates from main process
-      window.electronAPI.onTabsUpdated((tabsData) => {
-        tabs = tabsData;
-        renderTabs();
-      });
+      window.electronAPI.onTabsUpdated(tabsData => {
+        tabs = tabsData
+        renderTabs()
+      })
 
       const renderTabs = () => {
         // Clear existing tabs (except new tab button)
-        const existingTabs = tabBar.querySelectorAll(".tab");
-        existingTabs.forEach((tab) => tab.remove());
+        const existingTabs = tabBar.querySelectorAll('.tab')
+        existingTabs.forEach(tab => tab.remove())
 
         // Render tabs
-        tabs.forEach((tab) => {
-          const tabElement = createTabElement(tab);
-          tabBar.insertBefore(tabElement, newTabBtn);
-        });
-      };
+        tabs.forEach(tab => {
+          const tabElement = createTabElement(tab)
+          tabBar.insertBefore(tabElement, newTabBtn)
+        })
+      }
 
-      const createTabElement = (tab) => {
-        const tabElement = document.createElement("div");
-        tabElement.className = `tab ${tab.isActive ? "active" : ""}`;
-        tabElement.dataset.tabId = tab.id;
+      const createTabElement = tab => {
+        const tabElement = document.createElement('div')
+        tabElement.className = `tab ${tab.isActive ? 'active' : ''}`
+        tabElement.dataset.tabId = tab.id
 
-        const title = document.createElement("span");
-        title.className = "tab-title";
-        title.textContent = tab.title || "New Tab";
-        title.title = tab.title || tab.url;
+        const title = document.createElement('span')
+        title.className = 'tab-title'
+        title.textContent = tab.title || 'New Tab'
+        title.title = tab.title || tab.url
 
-        const closeBtn = document.createElement("span");
-        closeBtn.className = "tab-close";
-        closeBtn.innerHTML = "×";
-        closeBtn.title = "Close tab";
+        const closeBtn = document.createElement('span')
+        closeBtn.className = 'tab-close'
+        closeBtn.innerHTML = '×'
+        closeBtn.title = 'Close tab'
 
-        tabElement.appendChild(title);
-        tabElement.appendChild(closeBtn);
+        tabElement.appendChild(title)
+        tabElement.appendChild(closeBtn)
 
         // Tab click handler
-        tabElement.addEventListener("click", (e) => {
+        tabElement.addEventListener('click', e => {
           if (e.target === closeBtn) {
-            e.stopPropagation();
-            window.electronAPI.closeTab(tab.id);
+            e.stopPropagation()
+            window.electronAPI.closeTab(tab.id)
           } else {
-            window.electronAPI.setActiveTab(tab.id);
+            window.electronAPI.setActiveTab(tab.id)
           }
-        });
+        })
 
         // Middle mouse button to close tab
-        tabElement.addEventListener("mousedown", (e) => {
+        tabElement.addEventListener('mousedown', e => {
           if (e.button === 1) {
             // Middle mouse button
-            e.preventDefault();
-            e.stopPropagation();
-            window.electronAPI.closeTab(tab.id);
+            e.preventDefault()
+            e.stopPropagation()
+            window.electronAPI.closeTab(tab.id)
           }
-        });
+        })
 
-        return tabElement;
-      };
+        return tabElement
+      }
 
       // New tab button handler
-      newTabBtn.addEventListener("click", () => {
+      newTabBtn.addEventListener('click', () => {
         // Create a new tab with the default URL (localhost:5173)
-        window.electronAPI.createTab();
-      });
+        window.electronAPI.createTab()
+      })
 
       // Initialize tabs on load
-      window.addEventListener("DOMContentLoaded", () => {
-        window.electronAPI.getTabs().then((tabsData) => {
-          tabs = tabsData;
-          renderTabs();
-        });
-      });
+      window.addEventListener('DOMContentLoaded', () => {
+        window.electronAPI.getTabs().then(tabsData => {
+          tabs = tabsData
+          renderTabs()
+        })
+      })
     </script>
   </body>
 </html>
