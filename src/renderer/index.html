@@ -139,7 +139,7 @@
       let tabs = []
 
       // Listen for tab updates from main process
-      window.electronAPI.onTabsUpdated(tabsData => {
+      window.myAPI.onTabsUpdated(tabsData => {
         tabs = tabsData
         renderTabs()
       })
@@ -178,9 +178,9 @@
         tabElement.addEventListener('click', e => {
           if (e.target === closeBtn) {
             e.stopPropagation()
-            window.electronAPI.closeTab(tab.id)
+            window.myAPI.closeTab(tab.id)
           } else {
-            window.electronAPI.setActiveTab(tab.id)
+            window.myAPI.setActiveTab(tab.id)
           }
         })
 
@@ -190,7 +190,7 @@
             // Middle mouse button
             e.preventDefault()
             e.stopPropagation()
-            window.electronAPI.closeTab(tab.id)
+            window.myAPI.closeTab(tab.id)
           }
         })
 
@@ -200,12 +200,12 @@
       // New tab button handler
       newTabBtn.addEventListener('click', () => {
         // Create a new tab with the default URL (localhost:5173)
-        window.electronAPI.createTab()
+        window.myAPI.createTab()
       })
 
       // Initialize tabs on load
       window.addEventListener('DOMContentLoaded', () => {
-        window.electronAPI.getTabs().then(tabsData => {
+        window.myAPI.getTabs().then(tabsData => {
           tabs = tabsData
           renderTabs()
         })

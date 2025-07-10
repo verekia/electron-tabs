@@ -73,18 +73,7 @@ export default class TabManager {
       menu.append(
         new MenuItem({
           label: 'Inspect Element',
-          click: () => {
-            view.webContents.inspectElement(params.x, params.y)
-          },
-        }),
-      )
-
-      menu.append(
-        new MenuItem({
-          label: 'Reload',
-          click: () => {
-            view.webContents.reload()
-          },
+          click: () => view.webContents.inspectElement(params.x, params.y),
         }),
       )
 
